@@ -1,0 +1,9 @@
+[plugin]
+id = "transformer-compiler-plugin"
+class = "io.ballerina.transformer.plugin.TransformerCompilerPlugin"
+
+[[dependency]]
+path = "../transformer-compiler-plugin/build/libs/transformer-compiler-plugin-1.0.0-SNAPSHOT.jar"
+groupId = "ballerina"
+artifactId = "transformer"
+version = "1.0.0-SNAPSHOT"
