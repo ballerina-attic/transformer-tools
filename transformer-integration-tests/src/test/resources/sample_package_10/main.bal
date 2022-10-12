@@ -1,15 +1,13 @@
 import ballerina/transformer as _;
-import ballerina/tcp;
 
-listener tcpListener = check new tcp:Listener(3000);
-service on new tcp:Listener(3000) {
+public isolated function helloWorld(string firstName, Annot annot) returns string => firstName;
 
-    remote function onConnect(tcp:Caller caller)
-                              returns tcp:ConnectionService? {
-        return echoService();
-    }
-}
+public isolated function helloWorld1(table<map<int>> lastName, [string, string] tuple) => ();
 
-public isolated function echoService() returns tcp:ConnectionService? {
-    return null;
-}
+public isolated function helloWorld2(string... names) returns [string, string] => ["Hello", "World"];
+
+public isolated function helloWorld3(string firstName, string lastName = "Root") returns string => "Hello World";
+
+type Annot record {
+    string val;
+};

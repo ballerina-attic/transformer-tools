@@ -145,17 +145,26 @@ public class CompilerPluginTests {
     }
 
     @Test
-    public void testForValidPackageWithFailingCodeGeneration() {
+    public void testForFailingCodeGenerationWithUnsupportedParameters() {
         Package currentPackage = loadPackage("sample_package_8");
-//        PackageCompilation compilation = currentPackage.getCompilation();
-//        DiagnosticResult diagnosticResult = compilation.diagnosticResult();
         CodeGeneratorResult codeGenResult = currentPackage.runCodeGeneratorPlugins();
-//        codeGenResult.updatedPackage().orElse(null).modules().forEach(module -> {
-//            module.documentIds().forEach(docId -> {
-//                Systems.out.println(module.document(docId).textDocument().toString());
-//            });
-//        });
         DiagnosticResult diagnosticResult = codeGenResult.reportedDiagnostics();
-        Assert.assertEquals(diagnosticResult.errorCount(), 0);
+        Assert.assertEquals(diagnosticResult.errorCount(), 1);
+    }
+
+    @Test
+    public void testForFailingCodeGenerationWithUnsupportedReturnTypes() {
+        Package currentPackage = loadPackage("sample_package_9");
+        CodeGeneratorResult codeGenResult = currentPackage.runCodeGeneratorPlugins();
+        DiagnosticResult diagnosticResult = codeGenResult.reportedDiagnostics();
+        Assert.assertEquals(diagnosticResult.errorCount(), 1);
+    }
+
+    @Test
+    public void testForFailingCodeGenerationWithUnsupportedParametersAndReturnType() {
+        Package currentPackage = loadPackage("sample_package_10");
+        CodeGeneratorResult codeGenResult = currentPackage.runCodeGeneratorPlugins();
+        DiagnosticResult diagnosticResult = codeGenResult.reportedDiagnostics();
+        Assert.assertEquals(diagnosticResult.errorCount(), 2);
     }
 }
