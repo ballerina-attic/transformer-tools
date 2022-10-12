@@ -22,7 +22,7 @@ dependencies = [
 [[package]]
 org = "ballerina"
 name = "transformer"
-version = "1.0.0"
+version = "0.1.0"
 dependencies = [
 	{org = "ballerinai", name = "observe"}
 ]
