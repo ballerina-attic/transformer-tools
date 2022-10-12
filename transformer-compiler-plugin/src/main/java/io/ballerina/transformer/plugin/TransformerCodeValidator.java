@@ -271,12 +271,14 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                         .memberTypeDesc().kind())) {
                     foundSupportedType.set(true);
                 }
-            } else if (funcDefNode.functionSignature().returnTypeDesc().get().type().kind().equals(SyntaxKind.ARRAY_TYPE_DESC)) {
+            } else if (funcDefNode.functionSignature().returnTypeDesc().get().type().kind()
+                    .equals(SyntaxKind.ARRAY_TYPE_DESC)) {
                 if (httpSupportedTypes.contains(((MapTypeDescriptorNode) returnTypeDescNode.type())
                         .mapTypeParamsNode().typeNode().kind())) {
                     foundSupportedType.set(true);
                 }
-            } else if (funcDefNode.functionSignature().returnTypeDesc().get().type().kind().equals(SyntaxKind.ARRAY_TYPE_DESC)) {
+            } else if (funcDefNode.functionSignature().returnTypeDesc().get().type().kind()
+                    .equals(SyntaxKind.ARRAY_TYPE_DESC)) {
                 if (((TypeParameterNode) ((TableTypeDescriptorNode) returnTypeDescNode.type())
                         .rowTypeParameterNode()).typeNode().kind().equals(SyntaxKind.MAP_TYPE_DESC)) {
                     if (httpSupportedTypes.contains(((MapTypeDescriptorNode) ((TypeParameterNode)
@@ -285,7 +287,8 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                         foundSupportedType.set(true);
                     }
                 }
-            } else if (httpSupportedTypes.contains(funcDefNode.functionSignature().returnTypeDesc().get().type().kind())) {
+            } else if (httpSupportedTypes
+                    .contains(funcDefNode.functionSignature().returnTypeDesc().get().type().kind())) {
                 foundSupportedType.set(true);
             } else {
                 foundUnsupportedType.set(true);
