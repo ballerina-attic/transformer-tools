@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
  */
 import org.apache.tools.ant.taskdefs.condition.Os
 
-description = 'Ballerina - Transformer Compiler Plugin'
-
 buildscript {
     repositories {
         maven {
@@ -33,13 +31,15 @@ buildscript {
     }
 }
 
+description = 'Ballerina - Transformer Compiler Plugin'
+
 def packageName = "transformer"
-def packageOrg = "ballerina"
-def ballerinaLangVersion = project.ballerinaLangVersion
-def javaPlatform = "any"
+def packageOrg = "ballerinax"
 def tomlVersion = stripBallerinaExtensionVersion("${project.version}")
 def ballerinaConfigFile = new File("$project.projectDir/Ballerina.toml")
 def ballerinaCompileConfigFile = new File("$project.projectDir/CompilerPlugin.toml")
+def ballerinaLangVersion = project.ballerinaLangVersion
+def javaPlatform = "any"
 
 def stripBallerinaExtensionVersion(String extVersion) {
     if (extVersion.matches(project.ext.timestampedVersionRegex)) {
@@ -58,9 +58,9 @@ def stripBallerinaExtensionVersion(String extVersion) {
 apply plugin: 'io.ballerina.plugin'
 
 ballerina {
-    packageOrganization = packageOrg
     module = packageName
     langVersion = ballerinaLangVersion
+    packageOrganization = packageOrg
     platform = javaPlatform
 }
 
@@ -116,8 +116,8 @@ updateTomlFiles.dependsOn copyStdlibs
 
 build.dependsOn "generatePomFileForMavenPublication"
 build.dependsOn ":${packageName}-compiler-plugin:build"
-build.finalizedBy ":${packageName}-integration-tests:build"
-test.finalizedBy ":${packageName}-integration-tests:build"
+build.finalizedBy ":${packageName}-compiler-plugin-tests:build"
+test.finalizedBy ":${packageName}-compiler-plugin-tests:build"
 
 publishToMavenLocal.dependsOn build
 publish.dependsOn build

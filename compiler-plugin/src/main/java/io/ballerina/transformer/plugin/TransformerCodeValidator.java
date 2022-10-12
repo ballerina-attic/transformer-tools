@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2022, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -39,6 +39,7 @@ import io.ballerina.tools.diagnostics.Diagnostic;
 import io.ballerina.tools.diagnostics.DiagnosticFactory;
 import io.ballerina.tools.diagnostics.DiagnosticInfo;
 import io.ballerina.transformer.plugin.diagnostic.DiagnosticMessage;
+//import org.ballerinalang.model.types.TypeKind;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -199,6 +200,8 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                     }
                 } else if (requiredParamNode.typeName().kind().equals(SyntaxKind.SIMPLE_NAME_REFERENCE)) {
                     foundSupportedType.set(true);
+//                    ((BallerinaTypeReferenceTypeSymbol)syntaxNodeAnalysisContext.semanticModel()
+//                    .symbol(requiredParamNode.typeName()).get()).referredType.getKind();
                 } else if (httpSupportedTypes.contains(requiredParamNode.typeName().kind())) {
                     foundSupportedType.set(true);
                 } else {
