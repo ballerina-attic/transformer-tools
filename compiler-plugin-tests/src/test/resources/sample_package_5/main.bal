@@ -1,4 +1,4 @@
-import ballerina/transformer as _;
+import ballerinax/transformer as _;
 import ballerina/tcp;
 
 listener tcpListener = check new tcp:Listener(3000);

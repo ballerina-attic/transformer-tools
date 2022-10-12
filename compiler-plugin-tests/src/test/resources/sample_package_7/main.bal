@@ -1,4 +1,4 @@
-import ballerina/transformer as _;
+import ballerinax/transformer as _;
 
 public isolated function helloWorld(string firstName) returns string => firstName;
 
