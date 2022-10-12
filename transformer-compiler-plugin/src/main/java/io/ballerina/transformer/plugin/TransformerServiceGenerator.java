@@ -251,9 +251,7 @@ public class TransformerServiceGenerator implements GeneratorTask<SourceGenerato
                             !transformerFuncNode.functionSignature().returnTypeDesc().get().type()
                                     .kind().equals(SyntaxKind.NIL_TYPE_DESC);
             TypeDescriptorNode leftTypeNameNode = isReturnTypeDescNodePresent ?
-                    NodeFactory.createSimpleNameReferenceNode(AbstractNodeFactory
-                            .createToken(((BuiltinSimpleNameReferenceNode) transformerFuncNode.functionSignature()
-                                    .returnTypeDesc().get().type()).name().kind())) :
+                    (TypeDescriptorNode) transformerFuncNode.functionSignature().returnTypeDesc().get().type() :
                     NodeFactory.createNilTypeDescriptorNode(opParenToken, clParenToken);
             Token pipeToken = AbstractNodeFactory.createToken(SyntaxKind.PIPE_TOKEN);
             Token rightTypeName = AbstractNodeFactory.createToken(SyntaxKind.ERROR_KEYWORD);

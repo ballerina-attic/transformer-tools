@@ -48,8 +48,11 @@ public enum DiagnosticMessage {
             "Transformer packages are not allowed to have annotations.",
             DiagnosticSeverity.ERROR),
     ERROR_107("TRANSFORMER_ERROR_107",
-                      "Transformer packages contains non-service generatable functions.",
-              DiagnosticSeverity.ERROR);
+                      "The transformer function {0} has parameters of types which are unsupported at the moment.",
+              DiagnosticSeverity.ERROR),
+    ERROR_108("TRANSFORMER_ERROR_108",
+            "The return type of the transformer function {0} is unsupported at the moment.",
+            DiagnosticSeverity.ERROR);
 
     private final String code;
     private final String messageFormat;

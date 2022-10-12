@@ -18,7 +18,6 @@
 
 package io.ballerina.transformer.plugin;
 
-import io.ballerina.compiler.api.symbols.Symbol;
 import io.ballerina.compiler.syntax.tree.ArrayTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.DefaultableParameterNode;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
@@ -42,7 +41,6 @@ import io.ballerina.tools.diagnostics.DiagnosticInfo;
 import io.ballerina.transformer.plugin.diagnostic.DiagnosticMessage;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -111,10 +109,12 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                         if (isTransformerFunc(functionDefNode)) {
                             foundTransformerFunc.set(true);
                             transformerFunctions.add(functionDefNode);
-                            if (!isServiceGenerableFunc(functionDefNode, syntaxNodeAnalysisContext) ||
-                                    !isReturnTypeSupported(functionDefNode)) {
+                            if (!isServiceGenerableFunc(functionDefNode, syntaxNodeAnalysisContext)) {
                                 reportDiagnostics(syntaxNodeAnalysisContext, DiagnosticMessage.ERROR_107,
-                                        memberLocation);
+                                        memberLocation, functionDefNode.functionName().text());
+                            } else if (!isReturnTypeSupported(functionDefNode)) {
+                                reportDiagnostics(syntaxNodeAnalysisContext, DiagnosticMessage.ERROR_108,
+                                        memberLocation, functionDefNode.functionName().text());
                             }
                         }
                     }
@@ -198,9 +198,7 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                         }
                     }
                 } else if (requiredParamNode.typeName().kind().equals(SyntaxKind.SIMPLE_NAME_REFERENCE)) {
-                    Optional<Symbol> symbol = syntaxNodeAnalysisContext.semanticModel().symbol(requiredParamNode.typeName());
-                    System.out.println(symbol);
-//                    symbol.get().kind()
+                    foundSupportedType.set(true);
                 } else if (httpSupportedTypes.contains(requiredParamNode.typeName().kind())) {
                     foundSupportedType.set(true);
                 } else {
