@@ -210,6 +210,26 @@ public class TransformerServiceGenerator implements GeneratorTask<SourceGenerato
 
         Token opBraceToken = AbstractNodeFactory.createToken(SyntaxKind.OPEN_BRACE_TOKEN);
         Token clBraceToken = AbstractNodeFactory.createToken(SyntaxKind.CLOSE_BRACE_TOKEN);
+        NodeList<Node> members = generateResourceFunctions(transformerFunctions);
+
+        return NodeFactory.createServiceDeclarationNode(null, qualifierNodes, serviceKeyword,
+                null, absoluteResourcePathNodes, onKeyword, expressionNodes, opBraceToken, members,
+                clBraceToken);
+    }
+
+    /**
+     * This method returns a list of resource function nodes for the transformer function.
+     *
+     * @param transformerFunctions List of transformer functions for which resource functions to be generated
+     * @return {@link NodeList<Node>} Generated Resource function nodes
+     */
+    private NodeList<Node> generateResourceFunctions(List<FunctionDefinitionNode> transformerFunctions) {
+        IdentifierToken modulePrefix = AbstractNodeFactory.createIdentifierToken(HTTP_KEYWORD);
+        Token colonToken = AbstractNodeFactory.createToken(SyntaxKind.COLON_TOKEN);
+        Token opParenToken = AbstractNodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN);
+        Token clParenToken = AbstractNodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN);
+        Token opBraceToken = AbstractNodeFactory.createToken(SyntaxKind.OPEN_BRACE_TOKEN);
+        Token clBraceToken = AbstractNodeFactory.createToken(SyntaxKind.CLOSE_BRACE_TOKEN);
         List<Node> funcMembers = new ArrayList<>();
         for (FunctionDefinitionNode transformerFuncNode : transformerFunctions) {
             List<Token> functionQualifiers = new ArrayList<>();
@@ -358,11 +378,7 @@ public class TransformerServiceGenerator implements GeneratorTask<SourceGenerato
                             functionName, relativeResourcePathNodes, funcSignatureNode, funcBodyNode);
             funcMembers.add(funcDefNode);
         }
-        NodeList<Node> members = AbstractNodeFactory.createNodeList(funcMembers);
-
-        return NodeFactory.createServiceDeclarationNode(null, qualifierNodes, serviceKeyword,
-                null, absoluteResourcePathNodes, onKeyword, expressionNodes, opBraceToken, members,
-                clBraceToken);
+        return AbstractNodeFactory.createNodeList(funcMembers);
     }
 
     /**
