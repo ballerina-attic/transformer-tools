@@ -29,7 +29,6 @@ import io.ballerina.compiler.syntax.tree.DefaultableParameterNode;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
 import io.ballerina.compiler.syntax.tree.MapTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.ModulePartNode;
-import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeLocation;
 import io.ballerina.compiler.syntax.tree.RequiredParameterNode;
 import io.ballerina.compiler.syntax.tree.RestParameterNode;
@@ -46,9 +45,6 @@ import io.ballerina.tools.diagnostics.Diagnostic;
 import io.ballerina.tools.diagnostics.DiagnosticFactory;
 import io.ballerina.tools.diagnostics.DiagnosticInfo;
 import io.ballerina.transformer.plugin.diagnostic.DiagnosticMessage;
-import org.ballerinalang.model.types.ArrayType;
-import org.ballerinalang.model.types.TypeKind;
-//import org.ballerinalang.model.types.TypeKind;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -220,7 +216,7 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                     }
                 } else if (requiredParamNode.typeName().kind().equals(SyntaxKind.SIMPLE_NAME_REFERENCE)) {
                     if (syntaxNodeAnalysisContext.semanticModel().symbol(requiredParamNode.typeName()).isPresent()) {
-                        TypeSymbol typeSymbol =((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
+                        TypeSymbol typeSymbol = ((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
                                 .symbol(requiredParamNode.typeName()).get()).typeDescriptor();
                         boolean isSupportedTypeRef = isSupportedTypeReference(typeSymbol);
                         if (isSupportedTypeRef) {
@@ -259,7 +255,7 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                     }
                 } else if (defaultableParamNode.typeName().kind().equals(SyntaxKind.SIMPLE_NAME_REFERENCE)) {
                     if (syntaxNodeAnalysisContext.semanticModel().symbol(defaultableParamNode.typeName()).isPresent()) {
-                        TypeSymbol typeSymbol =((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
+                        TypeSymbol typeSymbol = ((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
                                 .symbol(defaultableParamNode.typeName()).get()).typeDescriptor();
                         boolean isSupportedTypeRef = isSupportedTypeReference(typeSymbol);
                         if (isSupportedTypeRef) {
@@ -298,7 +294,7 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                     }
                 } else if (restParamNode.typeName().kind().equals(SyntaxKind.SIMPLE_NAME_REFERENCE)) {
                     if (syntaxNodeAnalysisContext.semanticModel().symbol(restParamNode.typeName()).isPresent()) {
-                        TypeSymbol typeSymbol =((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
+                        TypeSymbol typeSymbol = ((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
                                 .symbol(restParamNode.typeName()).get()).typeDescriptor();
                         boolean isSupportedTypeRef = isSupportedTypeReference(typeSymbol);
                         if (isSupportedTypeRef) {
@@ -350,7 +346,7 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                     .equals(SyntaxKind.SIMPLE_NAME_REFERENCE)) {
                 if (syntaxNodeAnalysisContext.semanticModel().symbol(funcDefNode.functionSignature().returnTypeDesc()
                         .get().type()).isPresent()) {
-                    TypeSymbol typeSymbol =((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
+                    TypeSymbol typeSymbol = ((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
                             .symbol(funcDefNode.functionSignature().returnTypeDesc().get().type()).get())
                             .typeDescriptor();
                     boolean isSupportedTypeRef = isSupportedTypeReference(typeSymbol);
