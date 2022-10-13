@@ -18,11 +18,18 @@
 
 package io.ballerina.transformer.plugin;
 
+import io.ballerina.compiler.api.symbols.ArrayTypeSymbol;
+import io.ballerina.compiler.api.symbols.MapTypeSymbol;
+import io.ballerina.compiler.api.symbols.TableTypeSymbol;
+import io.ballerina.compiler.api.symbols.TypeDescKind;
+import io.ballerina.compiler.api.symbols.TypeReferenceTypeSymbol;
+import io.ballerina.compiler.api.symbols.TypeSymbol;
 import io.ballerina.compiler.syntax.tree.ArrayTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.DefaultableParameterNode;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
 import io.ballerina.compiler.syntax.tree.MapTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.ModulePartNode;
+import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeLocation;
 import io.ballerina.compiler.syntax.tree.RequiredParameterNode;
 import io.ballerina.compiler.syntax.tree.RestParameterNode;
@@ -39,6 +46,8 @@ import io.ballerina.tools.diagnostics.Diagnostic;
 import io.ballerina.tools.diagnostics.DiagnosticFactory;
 import io.ballerina.tools.diagnostics.DiagnosticInfo;
 import io.ballerina.transformer.plugin.diagnostic.DiagnosticMessage;
+import org.ballerinalang.model.types.ArrayType;
+import org.ballerinalang.model.types.TypeKind;
 //import org.ballerinalang.model.types.TypeKind;
 
 import java.util.List;
@@ -64,6 +73,17 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
             SyntaxKind.STRING_TYPE_DESC,
             SyntaxKind.JSON_TYPE_DESC,
             SyntaxKind.MAP_TYPE_DESC);
+
+    private final List<TypeDescKind> httpSupportedRefTypes = List.of(
+            TypeDescKind.BOOLEAN,
+            TypeDescKind.INT,
+            TypeDescKind.FLOAT,
+            TypeDescKind.DECIMAL,
+            TypeDescKind.BYTE,
+            TypeDescKind.STRING,
+            TypeDescKind.JSON,
+            TypeDescKind.RECORD
+    );
 
     TransformerCodeValidator(AtomicInteger visitedDefaultModulePart, AtomicBoolean foundTransformerFunc,
                              List<FunctionDefinitionNode> transformerFunctions) {
@@ -113,7 +133,7 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                             if (!isServiceGenerableFunc(functionDefNode, syntaxNodeAnalysisContext)) {
                                 reportDiagnostics(syntaxNodeAnalysisContext, DiagnosticMessage.ERROR_107,
                                         memberLocation, functionDefNode.functionName().text());
-                            } else if (!isReturnTypeSupported(functionDefNode)) {
+                            } else if (!isReturnTypeSupported(functionDefNode, syntaxNodeAnalysisContext)) {
                                 reportDiagnostics(syntaxNodeAnalysisContext, DiagnosticMessage.ERROR_108,
                                         memberLocation, functionDefNode.functionName().text());
                             }
@@ -199,9 +219,18 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                         }
                     }
                 } else if (requiredParamNode.typeName().kind().equals(SyntaxKind.SIMPLE_NAME_REFERENCE)) {
-                    foundSupportedType.set(true);
-//                    ((BallerinaTypeReferenceTypeSymbol)syntaxNodeAnalysisContext.semanticModel()
-//                    .symbol(requiredParamNode.typeName()).get()).referredType.getKind();
+                    if (syntaxNodeAnalysisContext.semanticModel().symbol(requiredParamNode.typeName()).isPresent()) {
+                        TypeSymbol typeSymbol =((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
+                                .symbol(requiredParamNode.typeName()).get()).typeDescriptor();
+                        boolean isSupportedTypeRef = isSupportedTypeReference(typeSymbol);
+                        if (isSupportedTypeRef) {
+                            foundSupportedType.set(true);
+                        } else {
+                            foundUnsupportedType.set(true);
+                        }
+                    } else {
+                        foundUnsupportedType.set(true);
+                    }
                 } else if (httpSupportedTypes.contains(requiredParamNode.typeName().kind())) {
                     foundSupportedType.set(true);
                 } else {
@@ -227,6 +256,19 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                                 .typeNode()).mapTypeParamsNode().typeNode().kind())) {
                             foundSupportedType.set(true);
                         }
+                    }
+                } else if (defaultableParamNode.typeName().kind().equals(SyntaxKind.SIMPLE_NAME_REFERENCE)) {
+                    if (syntaxNodeAnalysisContext.semanticModel().symbol(defaultableParamNode.typeName()).isPresent()) {
+                        TypeSymbol typeSymbol =((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
+                                .symbol(defaultableParamNode.typeName()).get()).typeDescriptor();
+                        boolean isSupportedTypeRef = isSupportedTypeReference(typeSymbol);
+                        if (isSupportedTypeRef) {
+                            foundSupportedType.set(true);
+                        } else {
+                            foundUnsupportedType.set(true);
+                        }
+                    } else {
+                        foundUnsupportedType.set(true);
                     }
                 } else if (httpSupportedTypes.contains(defaultableParamNode.typeName().kind())) {
                     foundSupportedType.set(true);
@@ -254,6 +296,19 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                             foundSupportedType.set(true);
                         }
                     }
+                } else if (restParamNode.typeName().kind().equals(SyntaxKind.SIMPLE_NAME_REFERENCE)) {
+                    if (syntaxNodeAnalysisContext.semanticModel().symbol(restParamNode.typeName()).isPresent()) {
+                        TypeSymbol typeSymbol =((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
+                                .symbol(restParamNode.typeName()).get()).typeDescriptor();
+                        boolean isSupportedTypeRef = isSupportedTypeReference(typeSymbol);
+                        if (isSupportedTypeRef) {
+                            foundSupportedType.set(true);
+                        } else {
+                            foundUnsupportedType.set(true);
+                        }
+                    } else {
+                        foundUnsupportedType.set(true);
+                    }
                 } else if (httpSupportedTypes.contains(restParamNode.typeName().kind())) {
                     foundSupportedType.set(true);
                 } else {
@@ -264,7 +319,8 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
         return foundSupportedType.get() && !foundUnsupportedType.get();
     }
 
-    private boolean isReturnTypeSupported(FunctionDefinitionNode funcDefNode) {
+    private boolean isReturnTypeSupported(FunctionDefinitionNode funcDefNode,
+                                          SyntaxNodeAnalysisContext syntaxNodeAnalysisContext) {
         AtomicBoolean foundSupportedType = new AtomicBoolean(false);
         AtomicBoolean foundUnsupportedType = new AtomicBoolean(false);
         if (funcDefNode.functionSignature().returnTypeDesc().isPresent()) {
@@ -290,6 +346,22 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                         foundSupportedType.set(true);
                     }
                 }
+            } else if (funcDefNode.functionSignature().returnTypeDesc().get().type().kind()
+                    .equals(SyntaxKind.SIMPLE_NAME_REFERENCE)) {
+                if (syntaxNodeAnalysisContext.semanticModel().symbol(funcDefNode.functionSignature().returnTypeDesc()
+                        .get().type()).isPresent()) {
+                    TypeSymbol typeSymbol =((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
+                            .symbol(funcDefNode.functionSignature().returnTypeDesc().get().type()).get())
+                            .typeDescriptor();
+                    boolean isSupportedTypeRef = isSupportedTypeReference(typeSymbol);
+                    if (isSupportedTypeRef) {
+                        foundSupportedType.set(true);
+                    } else {
+                        foundUnsupportedType.set(true);
+                    }
+                } else {
+                    foundUnsupportedType.set(true);
+                }
             } else if (httpSupportedTypes
                     .contains(funcDefNode.functionSignature().returnTypeDesc().get().type().kind())) {
                 foundSupportedType.set(true);
@@ -300,5 +372,20 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
             foundSupportedType.set(true);
         }
         return foundSupportedType.get() && !foundUnsupportedType.get();
+    }
+
+    private boolean isSupportedTypeReference(TypeSymbol typeSymbol) {
+        TypeDescKind typeDescKind = typeSymbol.typeKind();
+        if (typeDescKind.equals(TypeDescKind.ARRAY)) {
+            TypeSymbol memberTypeDesc = ((ArrayTypeSymbol) typeSymbol).memberTypeDescriptor();
+            return isSupportedTypeReference(memberTypeDesc);
+        } else if (typeDescKind.equals(TypeDescKind.MAP)) {
+            TypeSymbol memberTypeDesc = ((MapTypeSymbol) typeSymbol).typeParam();
+            return isSupportedTypeReference(memberTypeDesc);
+        } else if (typeDescKind.equals(TypeDescKind.TABLE)) {
+            TypeSymbol rowTypeDesc = ((TableTypeSymbol) typeSymbol).rowTypeParameter();
+            return isSupportedTypeReference(rowTypeDesc);
+        }
+        return httpSupportedRefTypes.contains(typeDescKind);
     }
 }
