@@ -64,12 +64,18 @@ public class CompilerPluginTests {
         Package currentPackage = loadPackage("sample_package_0");
         CodeGeneratorResult codeGenResult = currentPackage.runCodeGeneratorPlugins();
         DiagnosticResult diagnosticResult = codeGenResult.reportedDiagnostics();
-        Assert.assertEquals(diagnosticResult.errorCount(), 5);
-        assertError(diagnosticResult, 0, DiagnosticMessage.ERROR_102);
-        assertError(diagnosticResult, 1, DiagnosticMessage.ERROR_104);
-        assertError(diagnosticResult, 2, DiagnosticMessage.ERROR_101);
-        assertError(diagnosticResult, 3, DiagnosticMessage.ERROR_106);
-        assertError(diagnosticResult, 4, DiagnosticMessage.ERROR_105);
+        diagnosticResult.errors().forEach(diagnostic -> {
+            System.out.println(diagnostic.message());
+        });
+        Assert.assertEquals(diagnosticResult.errorCount(), 7);
+        assertError(diagnosticResult, 0, DiagnosticMessage.ERROR_110);
+        assertError(diagnosticResult, 1, DiagnosticMessage.ERROR_110);
+        assertError(diagnosticResult, 2, DiagnosticMessage.ERROR_102);
+        assertError(diagnosticResult, 3, DiagnosticMessage.ERROR_104);
+        assertError(diagnosticResult, 4, DiagnosticMessage.ERROR_101);
+        assertError(diagnosticResult, 5, DiagnosticMessage.ERROR_106);
+        assertError(diagnosticResult, 6, DiagnosticMessage.ERROR_105);
+
     }
 
     @Test

@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Transformer module Code Analyzer and Generator.
  *
  */
-public class TransformerCodeAnalyzerGenerator extends CodeGenerator {
+public class TransformerCodeAnalyzingGenerator extends CodeGenerator {
     private final AtomicInteger visitedDefaultModulePart = new AtomicInteger(0);
     private final AtomicBoolean foundTransformerFunc = new AtomicBoolean(false);
     private final List<FunctionDefinitionNode> transformerFunctions = Collections.synchronizedList(new ArrayList<>());

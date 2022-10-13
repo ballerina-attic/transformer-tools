@@ -109,18 +109,7 @@ public class TransformerServiceGenerator implements GeneratorTask<SourceGenerato
      */
     private String generateCode(List<FunctionDefinitionNode> transformerFunctions) {
         try {
-            Token importKeyword = AbstractNodeFactory.createToken(SyntaxKind.IMPORT_KEYWORD);
-            Token orgNameToken = AbstractNodeFactory.createIdentifierToken("ballerina");
-            Token slashToken = AbstractNodeFactory.createToken(SyntaxKind.SLASH_TOKEN);
-            ImportOrgNameNode orgNameNode = NodeFactory.createImportOrgNameNode(orgNameToken, slashToken);
-            IdentifierToken httpKeyword = AbstractNodeFactory.createIdentifierToken(HTTP_KEYWORD);
-            SeparatedNodeList<IdentifierToken> moduleName =
-                    AbstractNodeFactory.createSeparatedNodeList(List.of(httpKeyword));
-            Token semicolonToken = AbstractNodeFactory.createToken(SyntaxKind.SEMICOLON_TOKEN);
-            ImportDeclarationNode httpImport =
-                    NodeFactory.createImportDeclarationNode(importKeyword, orgNameNode, moduleName, null,
-                            semicolonToken);
-            NodeList<ImportDeclarationNode> imports = AbstractNodeFactory.createNodeList(List.of(httpImport));
+            NodeList<ImportDeclarationNode> imports = generateImports();
             List<TypeDefinitionNode> typeDefNodes = new ArrayList<>();
             transformerFunctions.forEach(transformerFunc -> {
                 if (transformerFunc.functionSignature().parameters().size() > 0) {
@@ -138,6 +127,26 @@ public class TransformerServiceGenerator implements GeneratorTask<SourceGenerato
         } catch (FormatterException e) {
             return null;
         }
+    }
+
+    /**
+     * This method returns a list of ImportDeclarationNodes.
+     *
+     * @return {@link NodeList<ImportDeclarationNode>} Generated list of ImportDeclarationNodes
+     */
+    private NodeList<ImportDeclarationNode> generateImports() {
+        Token importKeyword = AbstractNodeFactory.createToken(SyntaxKind.IMPORT_KEYWORD);
+        Token orgNameToken = AbstractNodeFactory.createIdentifierToken("ballerina");
+        Token slashToken = AbstractNodeFactory.createToken(SyntaxKind.SLASH_TOKEN);
+        ImportOrgNameNode orgNameNode = NodeFactory.createImportOrgNameNode(orgNameToken, slashToken);
+        IdentifierToken httpKeyword = AbstractNodeFactory.createIdentifierToken(HTTP_KEYWORD);
+        SeparatedNodeList<IdentifierToken> moduleName =
+                AbstractNodeFactory.createSeparatedNodeList(List.of(httpKeyword));
+        Token semicolonToken = AbstractNodeFactory.createToken(SyntaxKind.SEMICOLON_TOKEN);
+        ImportDeclarationNode httpImport =
+                NodeFactory.createImportDeclarationNode(importKeyword, orgNameNode, moduleName, null,
+                        semicolonToken);
+        return AbstractNodeFactory.createNodeList(List.of(httpImport));
     }
 
     /**
@@ -161,6 +170,7 @@ public class TransformerServiceGenerator implements GeneratorTask<SourceGenerato
                 NodeFactory.createTypedBindingPatternNode(typeDescNode, bindingPatternNode);
         Token equalsToken = AbstractNodeFactory.createToken(SyntaxKind.EQUAL_TOKEN);
         MinutiaeList minList = AbstractNodeFactory.createEmptyMinutiaeList();
+        // TODO: move port number to a const.
         LiteralValueToken valToken =
                 NodeFactory.createLiteralValueToken(SyntaxKind.DECIMAL_INTEGER_LITERAL_TOKEN, "8080",
                         minList, minList);

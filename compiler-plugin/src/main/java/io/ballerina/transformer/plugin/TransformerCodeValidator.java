@@ -29,7 +29,9 @@ import io.ballerina.compiler.syntax.tree.DefaultableParameterNode;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
 import io.ballerina.compiler.syntax.tree.MapTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.ModulePartNode;
+import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeLocation;
+import io.ballerina.compiler.syntax.tree.ParameterNode;
 import io.ballerina.compiler.syntax.tree.RequiredParameterNode;
 import io.ballerina.compiler.syntax.tree.RestParameterNode;
 import io.ballerina.compiler.syntax.tree.ReturnTypeDescriptorNode;
@@ -56,10 +58,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysisContext> {
 
+    private static final String MAIN_KEYWORD = "main";
     private final AtomicInteger visitedDefaultModulePart;
     private final AtomicBoolean foundTransformerFunc;
     private final List<FunctionDefinitionNode> transformerFunctions;
 
+
+    //TODO: Try to figure out a way to store these in a seperate DataType, and move these to a Const file.
     private final List<SyntaxKind> httpSupportedTypes = List.of(
             SyntaxKind.BOOLEAN_TYPE_DESC,
             SyntaxKind.INT_TYPE_DESC,
@@ -68,7 +73,8 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
             SyntaxKind.BYTE_TYPE_DESC,
             SyntaxKind.STRING_TYPE_DESC,
             SyntaxKind.JSON_TYPE_DESC,
-            SyntaxKind.MAP_TYPE_DESC);
+            SyntaxKind.MAP_TYPE_DESC
+    );
 
     private final List<TypeDescKind> httpSupportedRefTypes = List.of(
             TypeDescKind.BOOLEAN,
@@ -80,6 +86,8 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
             TypeDescKind.JSON,
             TypeDescKind.RECORD
     );
+
+    private boolean diagnosticForCompilationErrorReported = false;
 
     TransformerCodeValidator(AtomicInteger visitedDefaultModulePart, AtomicBoolean foundTransformerFunc,
                              List<FunctionDefinitionNode> transformerFunctions) {
@@ -101,6 +109,16 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
             }
         }
 
+        // Skip Code Analysis and Generation if the compilation got errors
+         if (syntaxNodeAnalysisContext.compilation().diagnosticResult().errors().size() > 0) {
+             if (!diagnosticForCompilationErrorReported) {
+                 reportDiagnostics(syntaxNodeAnalysisContext, DiagnosticMessage.ERROR_109,
+                         syntaxNodeAnalysisContext.node().location());
+                 diagnosticForCompilationErrorReported = true;
+             }
+             return;
+         }
+
         // Analyze each node within each ModulePart nodes
         modulePartNode.members().forEach(member -> {
             SyntaxKind nodeKind = member.kind();
@@ -109,7 +127,7 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
             switch (nodeKind) {
                 case FUNCTION_DEFINITION:
                     FunctionDefinitionNode functionDefNode = (FunctionDefinitionNode) member;
-                    if (functionDefNode.functionName().text().equals("main")) {
+                    if (functionDefNode.functionName().text().equals(MAIN_KEYWORD)) {
                         reportDiagnostics(syntaxNodeAnalysisContext, DiagnosticMessage.ERROR_100, memberLocation);
                     }
                     if (functionDefNode.qualifierList().stream().anyMatch(qualifier ->
@@ -126,13 +144,7 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                         if (isTransformerFunc(functionDefNode)) {
                             foundTransformerFunc.set(true);
                             transformerFunctions.add(functionDefNode);
-                            if (!isServiceGenerableFunc(functionDefNode, syntaxNodeAnalysisContext)) {
-                                reportDiagnostics(syntaxNodeAnalysisContext, DiagnosticMessage.ERROR_107,
-                                        memberLocation, functionDefNode.functionName().text());
-                            } else if (!isReturnTypeSupported(functionDefNode, syntaxNodeAnalysisContext)) {
-                                reportDiagnostics(syntaxNodeAnalysisContext, DiagnosticMessage.ERROR_108,
-                                        memberLocation, functionDefNode.functionName().text());
-                            }
+                            validateServiceGenerableFunction(functionDefNode, syntaxNodeAnalysisContext);
                         }
                     }
                     break;
@@ -145,7 +157,14 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                 case SERVICE_DECLARATION:
                     reportDiagnostics(syntaxNodeAnalysisContext, DiagnosticMessage.ERROR_104, memberLocation);
                     break;
+                case TYPE_DEFINITION:
+                case MODULE_VAR_DECL:
+                case CONST_DECLARATION:
+                case ENUM_DECLARATION:
+                case MODULE_XML_NAMESPACE_DECLARATION:
+                    break;
                 default:
+                    reportDiagnostics(syntaxNodeAnalysisContext, DiagnosticMessage.ERROR_110, memberLocation);
                     break;
             }
         });
@@ -184,182 +203,54 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                 funcDefNode.qualifierList().stream().anyMatch(qualifier ->
                         qualifier.kind() == SyntaxKind.PUBLIC_KEYWORD)
                 && funcDefNode.qualifierList().stream().anyMatch(qualifier ->
-                qualifier.kind() == SyntaxKind.PUBLIC_KEYWORD)
+                qualifier.kind() == SyntaxKind.ISOLATED_KEYWORD)
                 && funcDefNode.functionBody().kind() == SyntaxKind.EXPRESSION_FUNCTION_BODY;
     }
 
-    private boolean isServiceGenerableFunc(FunctionDefinitionNode funcDefNode,
-                                           SyntaxNodeAnalysisContext syntaxNodeAnalysisContext) {
-        AtomicBoolean foundSupportedType = new AtomicBoolean(false);
-        AtomicBoolean foundUnsupportedType = new AtomicBoolean(false);
-        funcDefNode.functionSignature().parameters().forEach(param -> {
+    private void validateServiceGenerableFunction(FunctionDefinitionNode funcDefNode,
+                                                  SyntaxNodeAnalysisContext syntaxNodeAnalysisContext) {
+        if (!isParamsSupported(funcDefNode, syntaxNodeAnalysisContext)) {
+            reportDiagnostics(syntaxNodeAnalysisContext, DiagnosticMessage.ERROR_107,
+                    funcDefNode.location(), funcDefNode.functionName().text());
+        } else if (!isReturnTypeSupported(funcDefNode, syntaxNodeAnalysisContext)) {
+            reportDiagnostics(syntaxNodeAnalysisContext, DiagnosticMessage.ERROR_108,
+                    funcDefNode.location(), funcDefNode.functionName().text());
+        }
+    }
+
+    private boolean isParamsSupported(FunctionDefinitionNode funcDefNode,
+                                      SyntaxNodeAnalysisContext syntaxNodeAnalysisContext) {
+        for (ParameterNode param : funcDefNode.functionSignature().parameters()) {
             if (param.kind().equals(SyntaxKind.REQUIRED_PARAM)) {
                 RequiredParameterNode requiredParamNode = (RequiredParameterNode) param;
-                if (requiredParamNode.typeName().kind().equals(SyntaxKind.ARRAY_TYPE_DESC)) {
-                    if (httpSupportedTypes.contains(((ArrayTypeDescriptorNode) requiredParamNode.typeName())
-                            .memberTypeDesc().kind())) {
-                        foundSupportedType.set(true);
-                    }
-                } else if (requiredParamNode.typeName().kind().equals(SyntaxKind.MAP_TYPE_DESC)) {
-                    if (httpSupportedTypes.contains(((MapTypeDescriptorNode) requiredParamNode.typeName())
-                            .mapTypeParamsNode().typeNode().kind())) {
-                        foundSupportedType.set(true);
-                    }
-                } else if (requiredParamNode.typeName().kind().equals(SyntaxKind.TABLE_TYPE_DESC)) {
-                    if (((TypeParameterNode) ((TableTypeDescriptorNode) requiredParamNode.typeName())
-                            .rowTypeParameterNode()).typeNode().kind().equals(SyntaxKind.MAP_TYPE_DESC)) {
-                        if (httpSupportedTypes.contains(((MapTypeDescriptorNode) ((TypeParameterNode)
-                                ((TableTypeDescriptorNode) requiredParamNode.typeName()).rowTypeParameterNode())
-                                .typeNode()).mapTypeParamsNode().typeNode().kind())) {
-                            foundSupportedType.set(true);
-                        }
-                    }
-                } else if (requiredParamNode.typeName().kind().equals(SyntaxKind.SIMPLE_NAME_REFERENCE)) {
-                    if (syntaxNodeAnalysisContext.semanticModel().symbol(requiredParamNode.typeName()).isPresent()) {
-                        TypeSymbol typeSymbol = ((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
-                                .symbol(requiredParamNode.typeName()).get()).typeDescriptor();
-                        boolean isSupportedTypeRef = isSupportedTypeReference(typeSymbol);
-                        if (isSupportedTypeRef) {
-                            foundSupportedType.set(true);
-                        } else {
-                            foundUnsupportedType.set(true);
-                        }
-                    } else {
-                        foundUnsupportedType.set(true);
-                    }
-                } else if (httpSupportedTypes.contains(requiredParamNode.typeName().kind())) {
-                    foundSupportedType.set(true);
-                } else {
-                    foundUnsupportedType.set(true);
+                if (!isNodeTypeHTTPSupported(requiredParamNode.typeName(), syntaxNodeAnalysisContext)) {
+                    return false;
                 }
             } else if (param.kind().equals(SyntaxKind.DEFAULTABLE_PARAM)) {
                 DefaultableParameterNode defaultableParamNode = (DefaultableParameterNode) param;
-                if (defaultableParamNode.typeName().kind().equals(SyntaxKind.ARRAY_TYPE_DESC)) {
-                    if (httpSupportedTypes.contains(((ArrayTypeDescriptorNode) defaultableParamNode.typeName())
-                            .memberTypeDesc().kind())) {
-                        foundSupportedType.set(true);
-                    }
-                } else if (defaultableParamNode.typeName().kind().equals(SyntaxKind.MAP_TYPE_DESC)) {
-                    if (httpSupportedTypes.contains(((MapTypeDescriptorNode) defaultableParamNode.typeName())
-                            .mapTypeParamsNode().typeNode().kind())) {
-                        foundSupportedType.set(true);
-                    }
-                } else if (defaultableParamNode.typeName().kind().equals(SyntaxKind.TABLE_TYPE_DESC)) {
-                    if (((TypeParameterNode) ((TableTypeDescriptorNode) defaultableParamNode.typeName())
-                            .rowTypeParameterNode()).typeNode().kind().equals(SyntaxKind.MAP_TYPE_DESC)) {
-                        if (httpSupportedTypes.contains(((MapTypeDescriptorNode) ((TypeParameterNode)
-                                ((TableTypeDescriptorNode) defaultableParamNode.typeName()).rowTypeParameterNode())
-                                .typeNode()).mapTypeParamsNode().typeNode().kind())) {
-                            foundSupportedType.set(true);
-                        }
-                    }
-                } else if (defaultableParamNode.typeName().kind().equals(SyntaxKind.SIMPLE_NAME_REFERENCE)) {
-                    if (syntaxNodeAnalysisContext.semanticModel().symbol(defaultableParamNode.typeName()).isPresent()) {
-                        TypeSymbol typeSymbol = ((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
-                                .symbol(defaultableParamNode.typeName()).get()).typeDescriptor();
-                        boolean isSupportedTypeRef = isSupportedTypeReference(typeSymbol);
-                        if (isSupportedTypeRef) {
-                            foundSupportedType.set(true);
-                        } else {
-                            foundUnsupportedType.set(true);
-                        }
-                    } else {
-                        foundUnsupportedType.set(true);
-                    }
-                } else if (httpSupportedTypes.contains(defaultableParamNode.typeName().kind())) {
-                    foundSupportedType.set(true);
-                } else {
-                    foundUnsupportedType.set(true);
+                if (!isNodeTypeHTTPSupported(defaultableParamNode.typeName(), syntaxNodeAnalysisContext)) {
+                    return false;
                 }
             } else if (param.kind().equals(SyntaxKind.REST_PARAM)) {
                 RestParameterNode restParamNode = (RestParameterNode) param;
-                if (restParamNode.typeName().kind().equals(SyntaxKind.ARRAY_TYPE_DESC)) {
-                    if (httpSupportedTypes.contains(((ArrayTypeDescriptorNode) restParamNode.typeName())
-                            .memberTypeDesc().kind())) {
-                        foundSupportedType.set(true);
-                    }
-                } else if (restParamNode.typeName().kind().equals(SyntaxKind.MAP_TYPE_DESC)) {
-                    if (httpSupportedTypes.contains(((MapTypeDescriptorNode) restParamNode.typeName())
-                            .mapTypeParamsNode().typeNode().kind())) {
-                        foundSupportedType.set(true);
-                    }
-                } else if (restParamNode.typeName().kind().equals(SyntaxKind.TABLE_TYPE_DESC)) {
-                    if (((TypeParameterNode) ((TableTypeDescriptorNode) restParamNode.typeName())
-                            .rowTypeParameterNode()).typeNode().kind().equals(SyntaxKind.MAP_TYPE_DESC)) {
-                        if (httpSupportedTypes.contains(((MapTypeDescriptorNode) ((TypeParameterNode)
-                                ((TableTypeDescriptorNode) restParamNode.typeName()).rowTypeParameterNode())
-                                .typeNode()).mapTypeParamsNode().typeNode().kind())) {
-                            foundSupportedType.set(true);
-                        }
-                    }
-                } else if (restParamNode.typeName().kind().equals(SyntaxKind.SIMPLE_NAME_REFERENCE)) {
-                    if (syntaxNodeAnalysisContext.semanticModel().symbol(restParamNode.typeName()).isPresent()) {
-                        TypeSymbol typeSymbol = ((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
-                                .symbol(restParamNode.typeName()).get()).typeDescriptor();
-                        boolean isSupportedTypeRef = isSupportedTypeReference(typeSymbol);
-                        if (isSupportedTypeRef) {
-                            foundSupportedType.set(true);
-                        } else {
-                            foundUnsupportedType.set(true);
-                        }
-                    } else {
-                        foundUnsupportedType.set(true);
-                    }
-                } else if (httpSupportedTypes.contains(restParamNode.typeName().kind())) {
-                    foundSupportedType.set(true);
-                } else {
-                    foundUnsupportedType.set(true);
+                if (!isNodeTypeHTTPSupported(restParamNode.typeName(), syntaxNodeAnalysisContext)) {
+                    return false;
                 }
+            } else {
+                return false;
             }
-        });
-        return foundSupportedType.get() && !foundUnsupportedType.get();
+        }
+        return true;
     }
 
     private boolean isReturnTypeSupported(FunctionDefinitionNode funcDefNode,
                                           SyntaxNodeAnalysisContext syntaxNodeAnalysisContext) {
+        // TODO: handle union type desc for return types. ie: error?, (int|error), (int|string), (RecName|error)
         AtomicBoolean foundSupportedType = new AtomicBoolean(false);
         AtomicBoolean foundUnsupportedType = new AtomicBoolean(false);
         if (funcDefNode.functionSignature().returnTypeDesc().isPresent()) {
             ReturnTypeDescriptorNode returnTypeDescNode = funcDefNode.functionSignature().returnTypeDesc().get();
-            if (returnTypeDescNode.type().kind().equals(SyntaxKind.ARRAY_TYPE_DESC)) {
-                if (httpSupportedTypes.contains(((ArrayTypeDescriptorNode) returnTypeDescNode.type())
-                        .memberTypeDesc().kind())) {
-                    foundSupportedType.set(true);
-                }
-            } else if (funcDefNode.functionSignature().returnTypeDesc().get().type().kind()
-                    .equals(SyntaxKind.ARRAY_TYPE_DESC)) {
-                if (httpSupportedTypes.contains(((MapTypeDescriptorNode) returnTypeDescNode.type())
-                        .mapTypeParamsNode().typeNode().kind())) {
-                    foundSupportedType.set(true);
-                }
-            } else if (funcDefNode.functionSignature().returnTypeDesc().get().type().kind()
-                    .equals(SyntaxKind.ARRAY_TYPE_DESC)) {
-                if (((TypeParameterNode) ((TableTypeDescriptorNode) returnTypeDescNode.type())
-                        .rowTypeParameterNode()).typeNode().kind().equals(SyntaxKind.MAP_TYPE_DESC)) {
-                    if (httpSupportedTypes.contains(((MapTypeDescriptorNode) ((TypeParameterNode)
-                            ((TableTypeDescriptorNode) returnTypeDescNode.type()).rowTypeParameterNode())
-                            .typeNode()).mapTypeParamsNode().typeNode().kind())) {
-                        foundSupportedType.set(true);
-                    }
-                }
-            } else if (funcDefNode.functionSignature().returnTypeDesc().get().type().kind()
-                    .equals(SyntaxKind.SIMPLE_NAME_REFERENCE)) {
-                if (syntaxNodeAnalysisContext.semanticModel().symbol(funcDefNode.functionSignature().returnTypeDesc()
-                        .get().type()).isPresent()) {
-                    TypeSymbol typeSymbol = ((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
-                            .symbol(funcDefNode.functionSignature().returnTypeDesc().get().type()).get())
-                            .typeDescriptor();
-                    boolean isSupportedTypeRef = isSupportedTypeReference(typeSymbol);
-                    if (isSupportedTypeRef) {
-                        foundSupportedType.set(true);
-                    } else {
-                        foundUnsupportedType.set(true);
-                    }
-                } else {
-                    foundUnsupportedType.set(true);
-                }
-            } else if (httpSupportedTypes
-                    .contains(funcDefNode.functionSignature().returnTypeDesc().get().type().kind())) {
+            if (isNodeTypeHTTPSupported(returnTypeDescNode.type(), syntaxNodeAnalysisContext)) {
                 foundSupportedType.set(true);
             } else {
                 foundUnsupportedType.set(true);
@@ -368,6 +259,31 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
             foundSupportedType.set(true);
         }
         return foundSupportedType.get() && !foundUnsupportedType.get();
+    }
+
+    private boolean isNodeTypeHTTPSupported(Node node, SyntaxNodeAnalysisContext syntaxNodeAnalysisContext) {
+        switch (node.kind()) {
+            case ARRAY_TYPE_DESC:
+                return httpSupportedTypes.contains(((ArrayTypeDescriptorNode) node).memberTypeDesc().kind());
+            case MAP_TYPE_DESC:
+                return httpSupportedTypes.contains(((MapTypeDescriptorNode) node).mapTypeParamsNode()
+                        .typeNode().kind());
+            case TABLE_TYPE_DESC:
+                if (((TypeParameterNode) ((TableTypeDescriptorNode) node).rowTypeParameterNode()).typeNode().kind()
+                        .equals(SyntaxKind.MAP_TYPE_DESC)) {
+                    return httpSupportedTypes.contains(((MapTypeDescriptorNode) ((TypeParameterNode)
+                            ((TableTypeDescriptorNode) node).rowTypeParameterNode())
+                            .typeNode()).mapTypeParamsNode().typeNode().kind());
+                }
+            case SIMPLE_NAME_REFERENCE:
+                if (syntaxNodeAnalysisContext.semanticModel().symbol(node).isPresent()) {
+                    TypeSymbol typeSymbol = ((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
+                            .symbol(node).get()).typeDescriptor();
+                    return isSupportedTypeReference(typeSymbol);
+                }
+            default:
+                return httpSupportedTypes.contains(node.kind());
+        }
     }
 
     private boolean isSupportedTypeReference(TypeSymbol typeSymbol) {
