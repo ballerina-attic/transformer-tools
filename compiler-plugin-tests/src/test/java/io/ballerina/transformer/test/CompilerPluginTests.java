@@ -64,9 +64,6 @@ public class CompilerPluginTests {
         Package currentPackage = loadPackage("sample_package_0");
         CodeGeneratorResult codeGenResult = currentPackage.runCodeGeneratorPlugins();
         DiagnosticResult diagnosticResult = codeGenResult.reportedDiagnostics();
-        diagnosticResult.errors().forEach(diagnostic -> {
-            System.out.println(diagnostic.message());
-        });
         Assert.assertEquals(diagnosticResult.errorCount(), 7);
         assertError(diagnosticResult, 0, DiagnosticMessage.ERROR_110);
         assertError(diagnosticResult, 1, DiagnosticMessage.ERROR_110);

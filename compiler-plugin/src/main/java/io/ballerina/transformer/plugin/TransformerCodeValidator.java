@@ -275,12 +275,14 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                             ((TableTypeDescriptorNode) node).rowTypeParameterNode())
                             .typeNode()).mapTypeParamsNode().typeNode().kind());
                 }
+                return false;
             case SIMPLE_NAME_REFERENCE:
                 if (syntaxNodeAnalysisContext.semanticModel().symbol(node).isPresent()) {
                     TypeSymbol typeSymbol = ((TypeReferenceTypeSymbol) syntaxNodeAnalysisContext.semanticModel()
                             .symbol(node).get()).typeDescriptor();
                     return isSupportedTypeReference(typeSymbol);
                 }
+                return false;
             default:
                 return httpSupportedTypes.contains(node.kind());
         }
