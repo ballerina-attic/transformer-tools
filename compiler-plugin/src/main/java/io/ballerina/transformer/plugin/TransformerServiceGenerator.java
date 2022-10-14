@@ -79,6 +79,7 @@ import java.util.List;
 /**
  * Transformer module Service Generator.
  *
+ * @since 0.1.0
  */
 public class TransformerServiceGenerator implements GeneratorTask<SourceGeneratorContext> {
 

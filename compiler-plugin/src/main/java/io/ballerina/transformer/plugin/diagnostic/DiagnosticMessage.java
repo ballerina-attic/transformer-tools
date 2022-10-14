@@ -23,6 +23,7 @@ import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 /**
  * Transformer module Diagnostic messages.
  *
+ * @since 0.1.0
  */
 public enum DiagnosticMessage {
     ERROR_100("TRANSFORMER_ERROR_100",

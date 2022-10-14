@@ -24,6 +24,7 @@ import io.ballerina.projects.plugins.CompilerPluginContext;
 /**
  * Transformer module Compiler Plugin.
  *
+ * @since 0.1.0
  */
 public class TransformerCompilerPlugin extends CompilerPlugin {
     @Override

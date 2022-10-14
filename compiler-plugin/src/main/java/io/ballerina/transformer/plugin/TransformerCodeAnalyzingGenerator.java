@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Transformer module Code Analyzer and Generator.
  *
+ * @since 0.1.0
  */
 public class TransformerCodeAnalyzingGenerator extends CodeGenerator {
     private final AtomicInteger visitedDefaultModulePart = new AtomicInteger(0);

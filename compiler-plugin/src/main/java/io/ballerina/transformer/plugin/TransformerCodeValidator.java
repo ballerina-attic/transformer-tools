@@ -55,6 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Transformer module Code Validator.
  *
+ * @since 0.1.0
  */
 public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysisContext> {
 
