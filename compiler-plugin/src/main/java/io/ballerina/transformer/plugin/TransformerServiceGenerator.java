@@ -220,11 +220,12 @@ public class TransformerServiceGenerator implements GeneratorTask<SourceGenerato
 
         Token opBraceToken = AbstractNodeFactory.createToken(SyntaxKind.OPEN_BRACE_TOKEN);
         Token clBraceToken = AbstractNodeFactory.createToken(SyntaxKind.CLOSE_BRACE_TOKEN);
+        Token semicolonToken = NodeFactory.createToken(SyntaxKind.SEMICOLON_TOKEN);
         NodeList<Node> members = generateResourceFunctions(transformerFunctions);
 
         return NodeFactory.createServiceDeclarationNode(null, qualifierNodes, serviceKeyword,
                 null, absoluteResourcePathNodes, onKeyword, expressionNodes, opBraceToken, members,
-                clBraceToken);
+                clBraceToken, semicolonToken);
     }
 
     /**
@@ -382,7 +383,7 @@ public class TransformerServiceGenerator implements GeneratorTask<SourceGenerato
                     expressionNode, semicolonToken);
             NodeList<StatementNode> statements = AbstractNodeFactory.createNodeList(returnStatementNode);
             FunctionBodyNode funcBodyNode = NodeFactory.createFunctionBodyBlockNode(opBraceToken, null,
-                    statements, clBraceToken);
+                    statements, clBraceToken, semicolonToken);
             FunctionDefinitionNode funcDefNode =
                     NodeFactory.createFunctionDefinitionNode(null, null, functionQualifierNodes, functionKeyword,
                             functionName, relativeResourcePathNodes, funcSignatureNode, funcBodyNode);
