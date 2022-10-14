@@ -1,0 +1,15 @@
+fixes:
+  - "ballerina/transformer/*/::transformer-ballerina/"
+
+ignore:
+  - "**/tests"
+  - "test-utils"
+
+coverage:
+  precision: 2
+  round: down
+  range: "60...80"
+  status:
+    project:
+      default:
+        target: 80
