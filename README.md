@@ -27,7 +27,9 @@ import ballerinax/transformer as _;
 Once a Ballerina package is validated, the transformer-tools will generate a service where it would allow the transformer-functions to be utilized through http.
 The parameters of the transformer-function has to be passed as a JSON payload.
 
-Example:
+The service for the Ballerina package would only get generated if there are no any validation errors, and the parameter types and return types of transformer function are serializable. Serializable Ballerina types can be found [here](https://github.com/ballerina-platform/module-ballerina-http/blob/master/docs/spec/spec.md#2344-payload-parameter).
+
+#### Example:
 ```ballerina
 import ballerinax/transformer as _;
 
