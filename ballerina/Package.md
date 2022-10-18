@@ -4,28 +4,8 @@ A data transformation function is a general purpose API to apply a function to a
 1. Validate if a given Ballerina package is a transformer package
 2. Generate Ballerina service(s) to expose Ballerina transformer functions as REST APIs
 
-## Validator and Generator
-### Transformer Package Validator
-Ballerina transformer tools can validate a Ballerina package if that comply with the constraints of a Ballerina transformer package. A Ballerina package to be treated as a transformer package it should comply for the below-mentioned constraints.
-1. The package should not contain any entry-points _(ie: main function or services)_
-2. The package should have one or more expression-bodied functions (transformer-function) with public and isolated qualifier.
-3. The package can contain other functions which can be used at util functions (cannot be public).
-4. The package can contain records
-5. The package in not allowed to have class definitions or listener definitions
-6. Expression bodied functions in the package is only allowed to have public qualifier
-7. The package is not allowed to have annotations.
-8. The public isolated expression bodied functions (transformer-functions) are allowed to have serializable types as parameter type and return type
-
-As of now, to activate the transformer tools on a Ballerina package, the tool required to be imported to the relevant package package as specified below. After that, when we build the Ballerina transformer package, it'll be validated against the aforementioned constraints.
-
-```ballerina
-import ballerinax/transformer as _;
-```
-
-### Ballerina Service Generator
-Once a Ballerina package is validated, the transformer tools will generate a service where it would allow the transformer functions to be consumed through REST APIs. The parameters of the transformer function has to be passed as a JSON payload.
-
-> Note: The service for the Ballerina package would only get generated if there are no any validation errors, and the parameter types and return types of transformer function should be serializable and should be supported by the Ballerina HTTP module. The list of such Ballerina types can be found in [Ballerina HTTP module specification](https://github.com/ballerina-platform/module-ballerina-http/blob/master/docs/spec/spec.md#2344-payload-parameter).
+## Create a Data-transformation Service
+To create a data transformation service, a Ballerina package has to be created and transformer-tools has to be imported. Once after writing the transformer functions, the build command would generate required transformer services for the transformer functions written. Below is an example.
 
 #### Example:
 ```ballerina
@@ -78,6 +58,29 @@ type transformPayload record {
     string school;
 };
 ```
+
+## Validator and Generator
+### Transformer Package Validator
+Ballerina transformer tools can validate a Ballerina package if that comply with the constraints of a Ballerina transformer package. A Ballerina package to be treated as a transformer package it should comply for the below-mentioned constraints.
+1. The package should not contain any entry-points _(ie: main function or services)_
+2. The package should have one or more expression-bodied functions (transformer-function) with public and isolated qualifier.
+3. The package can contain other functions which can be used at util functions (cannot be public).
+4. The package can contain records
+5. The package in not allowed to have class definitions or listener definitions
+6. Expression bodied functions in the package is only allowed to have public qualifier
+7. The package is not allowed to have annotations.
+8. The public isolated expression bodied functions (transformer-functions) are allowed to have serializable types as parameter type and return type
+
+As of now, to activate the transformer tools on a Ballerina package, the tool required to be imported to the relevant package package as specified below. After that, when we build the Ballerina transformer package, it'll be validated against the aforementioned constraints.
+
+```ballerina
+import ballerinax/transformer as _;
+```
+
+### Ballerina Service Generator
+Once a Ballerina package is validated, the transformer tools will generate a service where it would allow the transformer functions to be consumed through REST APIs. The parameters of the transformer function has to be passed as a JSON payload.
+
+> Note: The service for the Ballerina package would only get generated if there are no any validation errors, and the parameter types and return types of transformer function should be serializable and should be supported by the Ballerina HTTP module. The list of such Ballerina types can be found in [Ballerina HTTP module specification](https://github.com/ballerina-platform/module-ballerina-http/blob/master/docs/spec/spec.md#2344-payload-parameter).
 
 ## Useful links
 
