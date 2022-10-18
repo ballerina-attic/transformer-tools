@@ -76,3 +76,5 @@ test {
     systemProperty "ballerina.offline.flag", "true"
     useTestNG()
 }
+
+test.dependsOn ":transformer-ballerina:build"
