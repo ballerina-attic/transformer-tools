@@ -113,11 +113,12 @@ publishing {
 }
 
 updateTomlFiles.dependsOn copyStdlibs
+test.dependsOn copyStdlibs
 
 build.dependsOn "generatePomFileForMavenPublication"
 build.dependsOn ":${packageName}-compiler-plugin:build"
-build.finalizedBy ":${packageName}-compiler-plugin-tests:build"
-test.finalizedBy ":${packageName}-compiler-plugin-tests:build"
+//build.finalizedBy ":${packageName}-compiler-plugin-tests:build"
+test.dependsOn ":${packageName}-compiler-plugin:build"
 
 publishToMavenLocal.dependsOn build
 publish.dependsOn build
