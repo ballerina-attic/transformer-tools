@@ -203,8 +203,6 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
         return !funcDefNode.qualifierList().isEmpty() &&
                 funcDefNode.qualifierList().stream().anyMatch(qualifier ->
                         qualifier.kind() == SyntaxKind.PUBLIC_KEYWORD)
-                && funcDefNode.qualifierList().stream().anyMatch(qualifier ->
-                qualifier.kind() == SyntaxKind.ISOLATED_KEYWORD)
                 && funcDefNode.functionBody().kind() == SyntaxKind.EXPRESSION_FUNCTION_BODY;
     }
 

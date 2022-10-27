@@ -42,7 +42,7 @@ public enum DiagnosticMessage {
             "Transformer packages are not allowed to have services.",
             DiagnosticSeverity.ERROR),
     ERROR_105("TRANSFORMER_ERROR_105",
-            "Transformer packages should have at-least one public and isolated expression bodied functions.",
+            "Transformer packages should have at-least one public expression bodied functions.",
             DiagnosticSeverity.ERROR),
     ERROR_106("TRANSFORMER_ERROR_106",
             "Transformer packages are not allowed to have annotations.",
