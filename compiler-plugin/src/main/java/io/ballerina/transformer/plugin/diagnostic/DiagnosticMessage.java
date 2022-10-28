@@ -61,8 +61,8 @@ public enum DiagnosticMessage {
             DiagnosticSeverity.ERROR),
 
     HINT100("TRANSFORMER_ERROR_100",
-            "Since the transformer function {0} is not an 'isolated' function, " +
-                    "no concurrent calls will be made to that function",
+            "Counterpart resource function which will get generated for the transformer function {0} " +
+                    "will not support concurrent calls. Therefore consider making it 'isolated'.",
             DiagnosticSeverity.HINT);
 
     private final String code;
