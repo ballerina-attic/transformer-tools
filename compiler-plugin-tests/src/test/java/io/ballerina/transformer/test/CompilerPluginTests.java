@@ -145,6 +145,7 @@ public class CompilerPluginTests {
         CodeGeneratorResult codeGenResult = currentPackage.runCodeGeneratorPlugins();
         DiagnosticResult diagnosticResult = codeGenResult.reportedDiagnostics();
         Assert.assertEquals(diagnosticResult.errorCount(), 0);
+        Assert.assertEquals(diagnosticResult.hintCount(), 1);
     }
 
     @Test
@@ -169,5 +170,14 @@ public class CompilerPluginTests {
         CodeGeneratorResult codeGenResult = currentPackage.runCodeGeneratorPlugins();
         DiagnosticResult diagnosticResult = codeGenResult.reportedDiagnostics();
         Assert.assertEquals(diagnosticResult.errorCount(), 2);
+    }
+
+    @Test
+    public void testForTransformerFunstionsWithoutIsolatedQualifier() {
+        Package currentPackage = loadPackage("sample_package_11");
+        CodeGeneratorResult codeGenResult = currentPackage.runCodeGeneratorPlugins();
+        DiagnosticResult diagnosticResult = codeGenResult.reportedDiagnostics();
+        Assert.assertEquals(diagnosticResult.errorCount(), 0);
+        Assert.assertEquals(diagnosticResult.hintCount(), 2);
     }
 }

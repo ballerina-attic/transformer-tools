@@ -42,7 +42,7 @@ public enum DiagnosticMessage {
             "Transformer packages are not allowed to have services.",
             DiagnosticSeverity.ERROR),
     ERROR_105("TRANSFORMER_ERROR_105",
-            "Transformer packages should have at-least one public and isolated expression bodied functions.",
+            "Transformer packages should have at-least one public expression bodied functions.",
             DiagnosticSeverity.ERROR),
     ERROR_106("TRANSFORMER_ERROR_106",
             "Transformer packages are not allowed to have annotations.",
@@ -58,7 +58,12 @@ public enum DiagnosticMessage {
             DiagnosticSeverity.ERROR),
     ERROR_110("TRANSFORMER_ERROR_110",
             "Unknown Module level entity detected.",
-            DiagnosticSeverity.ERROR);
+            DiagnosticSeverity.ERROR),
+
+    HINT100("TRANSFORMER_ERROR_100",
+            "Counterpart resource function which will get generated for the transformer function {0} " +
+                    "will not support concurrent calls. Therefore consider making it 'isolated'.",
+            DiagnosticSeverity.HINT);
 
     private final String code;
     private final String messageFormat;
