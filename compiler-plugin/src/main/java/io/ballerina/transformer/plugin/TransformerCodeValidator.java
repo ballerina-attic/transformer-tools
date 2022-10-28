@@ -146,6 +146,10 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
                             foundTransformerFunc.set(true);
                             transformerFunctions.add(functionDefNode);
                             validateServiceGenerableFunction(functionDefNode, syntaxNodeAnalysisContext);
+                            if (!isTransformerFuncAllowConcurrentCalls(functionDefNode)) {
+                                reportDiagnostics(syntaxNodeAnalysisContext, DiagnosticMessage.HINT100,
+                                        memberLocation, functionDefNode.functionName());
+                            }
                         }
                     }
                     break;
@@ -203,6 +207,13 @@ public class TransformerCodeValidator implements AnalysisTask<SyntaxNodeAnalysis
         return !funcDefNode.qualifierList().isEmpty() &&
                 funcDefNode.qualifierList().stream().anyMatch(qualifier ->
                         qualifier.kind() == SyntaxKind.PUBLIC_KEYWORD)
+                && funcDefNode.functionBody().kind() == SyntaxKind.EXPRESSION_FUNCTION_BODY;
+    }
+
+    private boolean isTransformerFuncAllowConcurrentCalls(FunctionDefinitionNode funcDefNode) {
+        return !funcDefNode.qualifierList().isEmpty() &&
+                funcDefNode.qualifierList().stream().anyMatch(qualifier ->
+                        qualifier.kind() == SyntaxKind.ISOLATED_KEYWORD)
                 && funcDefNode.functionBody().kind() == SyntaxKind.EXPRESSION_FUNCTION_BODY;
     }
 

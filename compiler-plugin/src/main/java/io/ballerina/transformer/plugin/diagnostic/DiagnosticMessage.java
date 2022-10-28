@@ -58,7 +58,12 @@ public enum DiagnosticMessage {
             DiagnosticSeverity.ERROR),
     ERROR_110("TRANSFORMER_ERROR_110",
             "Unknown Module level entity detected.",
-            DiagnosticSeverity.ERROR);
+            DiagnosticSeverity.ERROR),
+
+    HINT100("TRANSFORMER_ERROR_100",
+            "Since the transformer function {0} is not an 'isolated' function, " +
+                    "no concurrent calls will be made to that function",
+            DiagnosticSeverity.HINT);
 
     private final String code;
     private final String messageFormat;
