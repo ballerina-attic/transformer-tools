@@ -1,0 +1,7 @@
+[package]
+org = "ballerinax"
+name = "transformer"
+version = "@toml.version@"
+
+[build-options]
+observabilityIncluded = true
