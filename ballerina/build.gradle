@@ -36,8 +36,10 @@ description = 'Ballerina - Transformer Compiler Plugin'
 def packageName = "transformer"
 def packageOrg = "ballerinax"
 def tomlVersion = stripBallerinaExtensionVersion("${project.version}")
+def ballerinaTomlFilePlaceHolder = new File("${project.rootDir}/build-config/resources/Ballerina.toml")
+def compilerPluginTomlFilePlaceHolder = new File("${project.rootDir}/build-config/resources/CompilerPlugin.toml")
 def ballerinaConfigFile = new File("$project.projectDir/Ballerina.toml")
-def ballerinaCompileConfigFile = new File("$project.projectDir/CompilerPlugin.toml")
+def ballerinaCompilerPluginConfigFile = new File("$project.projectDir/CompilerPlugin.toml")
 def ballerinaLangVersion = project.ballerinaLangVersion
 def javaPlatform = "any"
 
@@ -70,13 +72,13 @@ configurations {
 
 task updateTomlFiles {
     doLast {
-        def newConfig = ballerinaConfigFile.text.replace("@project.version@", project.version)
+        def newConfig = ballerinaTomlFilePlaceHolder.text.replace("@project.version@", project.version)
         newConfig = newConfig.replace("@toml.version@", tomlVersion)
         ballerinaConfigFile.text = newConfig
 
-        def newCompilerPluginToml = ballerinaCompileConfigFile.text.replace("@project.version@", project.version)
-        newCompilerPluginToml = newCompilerPluginToml.replace("@toml.version@", tomlVersion)
-        ballerinaCompileConfigFile.text = newCompilerPluginToml
+        def newCompilerPluginConfig = compilerPluginTomlFilePlaceHolder.text.replace("@project.version@", project.version)
+        newCompilerPluginConfig = newCompilerPluginConfig.replace("@toml.version@", tomlVersion)
+        ballerinaCompilerPluginConfigFile.text = newCompilerPluginConfig
     }
 }
 
